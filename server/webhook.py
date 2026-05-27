@@ -102,3 +102,23 @@ async def run_review(installation_id: int, repo_name: str, pr_number: int):
 
     except Exception as e:
         logger.error(f"Review failed for {repo_name}#{pr_number}: {e}", exc_info=True)
+
+
+@router.post("/webhook/marketplace")
+async def marketplace_webhook(request: Request) -> Response:
+    """Receive GitHub Marketplace purchase events."""
+    body = await request.body()
+    payload = await request.json()
+
+    event_type = request.headers.get("X-GitHub-Event", "")
+    action = payload.get("action", "")
+
+    logger.info(f"Marketplace event: {event_type} action={action}")
+
+    if event_type == "marketplace_purchase":
+        purchase = payload.get("marketplace_purchase", {})
+        plan = purchase.get("plan", {}).get("name", "unknown")
+        account = purchase.get("account", {}).get("login", "unknown")
+        logger.info(f"Purchase: account={account} plan={plan} action={action}")
+
+    return Response(status_code=200, content="OK")
